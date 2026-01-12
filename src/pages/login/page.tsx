@@ -14,9 +14,6 @@ export default function LoginPage() {
   const [clientIP, setClientIP] = useState('192.111.111.102');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Vite 설정의 base 경로를 가져옵니다 (예: /jt-project-dashboard/)
-  const baseUrl = import.meta.env.BASE_URL;
-
   // 저장된 로그인 정보 불러오기
   useEffect(() => {
     const savedUserId = localStorage.getItem('savedUserId');
@@ -79,8 +76,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen w-full flex items-center justify-center relative"
       style={{
-        // ▼ 수정됨: baseUrl 변수 사용
-        backgroundImage: `url(${baseUrl}login/background.png)`,
+        backgroundImage: 'url(/login/background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -93,8 +89,7 @@ export default function LoginPage() {
           {/* 로고 영역 */}
           <div className="flex items-center gap-2 mb-8">
             <img
-              // ▼ 수정됨: baseUrl 변수 사용
-              src={`${baseUrl}login/text-logo.png`}
+              src="/login/text-logo.png"
               alt="JT 친애저축은행"
               className="h-6"
             />
@@ -165,8 +160,7 @@ export default function LoginPage() {
 
         {/* 화살표 차트 이미지 */}
         <img
-          // ▼ 수정됨: baseUrl 변수 사용
-          src={`${baseUrl}login/arrow-image.png`}
+          src="/login/arrow-image.png"
           alt="성장 차트"
           className="w-[280px] h-auto -ml-2 mb-4 relative z-0"
         />

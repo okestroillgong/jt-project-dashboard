@@ -12,9 +12,6 @@ export default defineConfig({
       },
     }),
   ],
-  // ▼ 이 부분이 반드시 있어야 합니다! (저장소 이름 앞뒤로 슬래시)
-  base: '/jt-project-dashboard/',
-  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

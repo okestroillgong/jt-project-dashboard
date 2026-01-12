@@ -1,4 +1,4 @@
-import { createHashRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import RootLayout from '@/layouts/RootLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -103,8 +103,9 @@ const LoanConditionsPopup = () => lazyLoad(() => import('@/pages/popup/loan-cond
 const CreditRepaymentPopup = () => lazyLoad(() => import('@/pages/popup/credit-repayment/page'));
 const VisitRegistrationPopup = () => lazyLoad(() => import('@/pages/popup/visit-registration/page'));
 const CounselingRegistrationPopup = () => lazyLoad(() => import('@/pages/popup/counseling-registration/page'));
+const FavoritesManagementPopup = () => lazyLoad(() => import('@/pages/popup/favorites-management/page'));
 
-export const router = createHashRouter([
+export const router = createBrowserRouter([
   // Login page (standalone, no layout)
   {
     path: '/login',
@@ -208,6 +209,7 @@ export const router = createHashRouter([
           { path: 'credit-repayment', element: <CreditRepaymentPopup /> },
           { path: 'visit-registration', element: <VisitRegistrationPopup /> },
           { path: 'counseling-registration', element: <CounselingRegistrationPopup /> },
+          { path: 'favorites-management', element: <FavoritesManagementPopup /> },
         ],
       },
     ],

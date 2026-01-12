@@ -17,9 +17,11 @@ import IconScan from "@/assets/icons/js/오른쪽버튼아이콘07문서스캔�
 import IconAttach from "@/assets/icons/js/오른쪽버튼아이콘08파일첨부흰색";
 import IconSearchDoc from "@/assets/icons/js/오른쪽버튼아이콘09문서검색흰색";
 import IconDataReset from "@/assets/icons/js/오른쪽버튼아이콘10데이터초기화흰색";
-import { X, CheckCircle, FilePenLine, FileText, ShieldCheck, Percent, Hourglass, History, Printer, Gavel, Play, Pause, XSquare, ExternalLink } from "lucide-react";
+import { X, CheckCircle, FilePenLine, FileText, ShieldCheck, Percent, Hourglass, History, Printer, Gavel, Play, Pause, XSquare, ExternalLink, Star } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { usePathname } from "@/lib/hooks/useAppLocation";
+import { useFavoritesStore } from "@/lib/store/favoritesStore";
+import { useTabStore } from "@/lib/store/tabs";
 
 // 각 액션 버튼의 설정을 위한 타입을 정의합니다.
 type ActionConfig = {
@@ -67,6 +69,7 @@ const iconMap: Record<string, ActionConfig> = {
   stop: { icon: Pause, text: "중지" },
   terminate: { icon: XSquare, text: "종료" },
   "open-popup": { icon: ExternalLink, text: "새 창으로 열기" },
+  favorite: { icon: Star, text: "즐겨찾기" },
 };
 
 export type ActionType = keyof typeof iconMap;
@@ -92,10 +95,54 @@ const getButtonColors = (id: ActionType) => {
 
 export function RightActions({ actions }: RightActionsProps) {
   const tabId = usePathname();
+  const { isFavorite } = useFavoritesStore();
+  const activeTab = useTabStore((state) => state.tabs.find(t => t.id === tabId));
+  const isCurrentFavorite = isFavorite(tabId);
+
+  // Filter out 'favorite' from actions array (it will be rendered first automatically)
+  const filteredActions = actions.filter(action => action.id !== 'favorite');
+
+  // Favorite button handler - opens favorites management popup
+  const handleFavoriteClick = () => {
+    const label = activeTab?.label || tabId.split('/').pop() || '페이지';
+    const popupWidth = 800;
+    const popupHeight = 600;
+    const left = (window.screen.width / 2) - (popupWidth / 2);
+    const top = (window.screen.height / 2) - (popupHeight / 2);
+
+    window.open(
+      `/popup/favorites-management?pageId=${encodeURIComponent(tabId)}&pageName=${encodeURIComponent(label)}`,
+      'FavoritesManagement',
+      `width=${popupWidth},height=${popupHeight},top=${top},left=${left}`
+    );
+  };
+
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
-        {actions.map(({ id, onClick }) => {
+        {/* Favorite button - always rendered first */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              className={`flex items-center justify-center text-white p-0 cursor-pointer ${
+                isCurrentFavorite
+                  ? "bg-[#f5a623] hover:bg-[#f5a623]/90"
+                  : "bg-[#25292e] hover:bg-[#25292e]/90"
+              }`}
+              style={{ width: "35px", height: "35px", borderRadius: "8px" }}
+              onClick={handleFavoriteClick}
+            >
+              <Star className={isCurrentFavorite ? "size-5 fill-current" : "size-5"} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isCurrentFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Other action buttons */}
+        {filteredActions.map(({ id, onClick }) => {
           const actionConfig = iconMap[id];
           if (!actionConfig) return null;
 

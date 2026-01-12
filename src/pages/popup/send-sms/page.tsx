@@ -46,9 +46,9 @@ function SendSmsPopupContent() {
   }, []);
 
   const popupActions: PopupAction[] = [
-    { id: "confirm", text: "확인", variant: "secondary" },
-    { id: "reset", text: "초기화", variant: "secondary", onClick: () => window.location.reload() },
-    { id: "close", text: "닫기", variant: "secondary", onClick: () => window.close() },
+    { id: "confirm", text: "확인" },
+    { id: "reset", text: "초기화", onClick: () => window.location.reload() },
+    { id: "close", text: "닫기", onClick: () => window.close() },
   ];
 
   const filterLayout: FilterLayout = [

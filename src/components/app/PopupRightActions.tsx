@@ -6,7 +6,6 @@ export interface PopupAction {
   id: string;
   text: string;
   onClick?: () => void;
-  variant?: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link";
 }
 
 interface PopupRightActionsProps {
@@ -16,10 +15,10 @@ interface PopupRightActionsProps {
 export function PopupRightActions({ actions }: PopupRightActionsProps) {
   return (
     <div className="flex items-center gap-2">
-      {actions.map(({ id, text, onClick, variant = "secondary" }) => (
+      {actions.map(({ id, text, onClick }) => (
         <Button
           key={id}
-          variant={variant}
+          variant="secondary"
           className="h-[35px] w-24 cursor-pointer rounded-2xl"
           onClick={onClick}
         >

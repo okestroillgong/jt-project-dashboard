@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "@/lib/hooks/useAppLocation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Star, Menu } from "lucide-react";
 import { useTabStore } from "@/lib/store/tabs";
 import { useLayoutStore } from "@/lib/store/layoutStore";
+import { useFavoritesStore } from "@/lib/store/favoritesStore";
 
 // 1st level icons
 import IconMainMenu01 from "@/assets/icons/js/메인메뉴01상담관리";
@@ -178,7 +179,8 @@ export function Sidebar() {
   const [selected, setSelected] = useState("상담관리");
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
-  
+  const [sidebarTab, setSidebarTab] = useState<'menu' | 'favorites'>('menu');
+
   const router = useRouter();
   const pathname = usePathname();
   const { addTab } = useTabStore();
@@ -231,7 +233,65 @@ export function Sidebar() {
           "flex h-full flex-col py-4 transition-all duration-300",
           isSidebarExpanded ? "w-64" : "w-[108px]"
       )}>
+        {/* Tab Buttons */}
+        {isSidebarExpanded ? (
+          <div className="flex gap-1 px-4 mb-4">
+            <Button
+              variant={sidebarTab === 'menu' ? 'default' : 'ghost'}
+              onClick={() => setSidebarTab('menu')}
+              className={cn(
+                "flex-1 h-9 rounded-xl transition-colors",
+                sidebarTab === 'menu'
+                  ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                  : "bg-transparent text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              업무메뉴
+            </Button>
+            <Button
+              variant={sidebarTab === 'favorites' ? 'default' : 'ghost'}
+              onClick={() => setSidebarTab('favorites')}
+              className={cn(
+                "flex-1 h-9 rounded-xl transition-colors",
+                sidebarTab === 'favorites'
+                  ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                  : "bg-transparent text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              즐겨찾기
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 px-4 mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => setSidebarTab('menu')}
+              className={cn(
+                "h-10 w-full rounded-xl transition-colors",
+                sidebarTab === 'menu'
+                  ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                  : "bg-transparent text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <Menu className="size-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setSidebarTab('favorites')}
+              className={cn(
+                "h-10 w-full rounded-xl transition-colors",
+                sidebarTab === 'favorites'
+                  ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                  : "bg-transparent text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <Star className="size-5" />
+            </Button>
+          </div>
+        )}
+
         {/* Scrollable Menu Area */}
+        {sidebarTab === 'menu' && (
         <div className="flex-grow overflow-y-auto no-scrollbar">
           <div className="px-4">
             {primaryNavItems.map((item) => {
@@ -291,6 +351,15 @@ export function Sidebar() {
             })}
           </div>
         </div>
+        )}
+
+        {/* Favorites List */}
+        {sidebarTab === 'favorites' && (
+          <FavoritesList
+            handleLinkClick={handleLinkClick}
+            isExpanded={isSidebarExpanded}
+          />
+        )}
 
         {/* Admin Profile Section - Sticky Footer */}
         <div className={cn("flex-shrink-0 px-4 pt-2 pb-0", isSidebarExpanded ? "border-t" : "pt-4")}>
@@ -635,7 +704,7 @@ function AfterLoanSecondarySidebar({ handleLinkClick }: { handleLinkClick: (path
     if (!activeTabId || !activeTabId.startsWith('/after-loan')) {
       return null; // Not an after-loan page, so no submenu should be open
     }
-    const foundParent = afterLoanSecondaryNavItems.find(item => 
+    const foundParent = afterLoanSecondaryNavItems.find(item =>
       item.children?.some(child => child.href === activeTabId)
     );
     return foundParent ? foundParent.name : null; // Return parent name or null if not found
@@ -743,5 +812,182 @@ function AfterLoanSecondarySidebar({ handleLinkClick }: { handleLinkClick: (path
         ))}
       </nav>
     </aside>
+  );
+}
+
+function FavoritesList({
+  handleLinkClick,
+  isExpanded,
+}: {
+  handleLinkClick: (path: string, label: string) => void;
+  isExpanded: boolean;
+}) {
+  const { folders, favorites } = useFavoritesStore();
+  const activeTabId = useTabStore((state) => state.activeTabId);
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(['root']));
+
+  const checkIsActive = (href: string) => activeTabId === href;
+
+  const toggleFolder = (folderId: string) => {
+    setOpenFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  // Build folder tree
+  const getFolderChildren = (parentId: string | null) => {
+    return folders.filter(f => f.parentId === parentId).sort((a, b) => a.order - b.order);
+  };
+
+  const getFolderFavorites = (folderId: string) => {
+    return favorites.filter(f => f.folderId === folderId).sort((a, b) => b.addedAt - a.addedAt);
+  };
+
+  const renderFolder = (folder: typeof folders[0], depth: number = 0) => {
+    const isOpen = openFolders.has(folder.id);
+    const childFolders = getFolderChildren(folder.id);
+    const folderFavorites = getFolderFavorites(folder.id);
+    const hasChildren = childFolders.length > 0 || folderFavorites.length > 0;
+
+    if (!isExpanded) {
+      // Collapsed mode: only show favorites as flat list
+      return null;
+    }
+
+    return (
+      <div key={folder.id}>
+        {/* Folder header */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "group w-full flex items-center gap-2 h-9 rounded-xl transition-colors justify-start px-3",
+            "text-gray-700 hover:bg-gray-100"
+          )}
+          style={{ paddingLeft: `${12 + depth * 12}px` }}
+          onClick={() => toggleFolder(folder.id)}
+        >
+          {hasChildren && (
+            <ChevronRight
+              className={cn(
+                "size-3 shrink-0 text-gray-400 transition-transform",
+                isOpen && "rotate-90"
+              )}
+            />
+          )}
+          {!hasChildren && <div className="w-3" />}
+          <span className="truncate text-sm font-medium">{folder.name}</span>
+          <span className="text-xs text-gray-400 ml-auto">
+            {folderFavorites.length + childFolders.length}
+          </span>
+        </Button>
+
+        {/* Folder contents */}
+        {isOpen && (
+          <div className="flex flex-col">
+            {/* Sub-folders */}
+            {childFolders.map(childFolder => renderFolder(childFolder, depth + 1))}
+
+            {/* Favorites in this folder */}
+            {folderFavorites.map((item) => (
+              <Button
+                key={item.id}
+                variant="ghost"
+                className={cn(
+                  "group w-full flex items-center gap-2 h-9 rounded-xl transition-colors justify-start px-3",
+                  checkIsActive(item.path)
+                    ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                    : "text-gray-800 hover:bg-gray-100"
+                )}
+                style={{ paddingLeft: `${24 + depth * 12}px` }}
+                onClick={() => handleLinkClick(item.path, item.label)}
+              >
+                <Star
+                  className={cn(
+                    "size-3.5 shrink-0",
+                    checkIsActive(item.path)
+                      ? "text-yellow-300 fill-yellow-300"
+                      : "text-yellow-500 fill-yellow-500"
+                  )}
+                />
+                <span className="truncate text-sm">{item.label}</span>
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Collapsed mode: show flat list of all favorites
+  if (!isExpanded) {
+    const allFavorites = favorites.sort((a, b) => b.addedAt - a.addedAt);
+
+    if (allFavorites.length === 0) {
+      return (
+        <div className="flex-grow flex items-center justify-center px-4">
+          <Star className="size-6 text-gray-300" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-grow overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-1 px-4">
+          {allFavorites.map((item) => (
+            <Button
+              key={item.id}
+              variant="ghost"
+              className={cn(
+                "group w-full flex items-center justify-center gap-2 h-10 rounded-xl transition-colors px-0",
+                checkIsActive(item.path)
+                  ? "bg-[#219361] text-white hover:bg-[#219361]/90"
+                  : "text-gray-800 hover:bg-gray-100"
+              )}
+              onClick={() => handleLinkClick(item.path, item.label)}
+            >
+              <Star
+                className={cn(
+                  "size-4 shrink-0",
+                  checkIsActive(item.path)
+                    ? "text-yellow-300 fill-yellow-300"
+                    : "text-yellow-500 fill-yellow-500"
+                )}
+              />
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded mode: show folder tree
+  const rootFolders = getFolderChildren(null);
+
+  if (favorites.length === 0 && rootFolders.length <= 1) {
+    return (
+      <div className="flex-grow flex items-center justify-center px-4">
+        <div className="text-center text-gray-500 text-sm">
+          <Star className="size-8 mx-auto mb-2 text-gray-300" />
+          <p>즐겨찾기한 페이지가 없습니다</p>
+          <p className="text-xs mt-1 text-gray-400">
+            페이지에서 ★ 버튼을 클릭하여<br />즐겨찾기를 추가하세요
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-grow overflow-y-auto no-scrollbar">
+      <div className="flex flex-col gap-0.5 px-2">
+        {rootFolders.map(folder => renderFolder(folder, 0))}
+      </div>
+    </div>
   );
 }
